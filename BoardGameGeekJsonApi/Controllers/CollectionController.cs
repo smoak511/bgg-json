@@ -55,7 +55,8 @@ namespace BoardGameGeekJsonApi.Controllers
                     gameIds.UnionWith(expansions.Select(g => g.GameId));
                 }
 
-                var gameDetailsList = await client.ParallelLoadGames(gameIds);
+                //var gameDetailsList = await client.ParallelLoadGames(gameIds);
+                var gameDetailsList = await client.LoadAvgWeights(gameIds);
                 var gameDetailsById = gameDetailsList.Where(g => g != null).ToDictionary(g => g.GameId);
 
                 if (details)
@@ -65,12 +66,13 @@ namespace BoardGameGeekJsonApi.Controllers
                         if (gameDetailsById.ContainsKey(game.GameId))
                         {
                             var gameDetails = gameDetailsById[game.GameId];
-                            game.Description = gameDetails.Description;
-                            game.Mechanics = gameDetails.Mechanics;
-                            game.BGGRating = gameDetails.BGGRating;
-                            game.Artists = gameDetails.Artists;
-                            game.Publishers = gameDetails.Publishers;
-                            game.Designers = gameDetails.Designers;
+                            //game.Description = gameDetails.Description;
+                            //game.Mechanics = gameDetails.Mechanics;
+                            //game.BGGRating = gameDetails.BGGRating;
+                            //game.Artists = gameDetails.Artists;
+                            //game.Publishers = gameDetails.Publishers;
+                            //game.Designers = gameDetails.Designers;
+                            game.AverageWeight = gameDetails.AverageWeight;
                         }
                     }
                 }

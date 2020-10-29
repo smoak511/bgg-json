@@ -19,6 +19,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using System.Xml.Linq;
+using WebGrease.Css.Extensions;
 
 namespace BoardGameGeekJsonApi
 {
@@ -78,7 +79,7 @@ namespace BoardGameGeekJsonApi
             try
             {
 
-                Uri teamDataURI = new Uri(string.Format(BASE_URL2 + "/collection?username={0}&stats=1&{1}",
+                Uri teamDataURI = new Uri(string.Format(BASE_URL2 + "/collection?username={0}&stats=1&{1}&own=1",
                     Username,
                     GetExpansions ? "subtype=boardgameexpansion" : "excludesubtype=boardgameexpansion"));
 
@@ -252,6 +253,7 @@ namespace BoardGameGeekJsonApi
                                                               GameId = int.Parse(Boardgame.Element("item").Attribute("id").Value),
                                                               Artists = (from p in Boardgame.Element("item").Elements("link") where p.Attribute("type").Value == "boardgameartist" select p.Attribute("value").Value).ToList(),
                                                               AverageRating = decimal.Parse(Boardgame.Element("item").Element("statistics").Element("ratings").Element("average").Attribute("value").Value),
+                                                              AverageWeight = decimal.Parse(Boardgame.Element("item").Element("statistics").Element("ratings").Element("averageweight").Attribute("value").Value),
                                                               BGGRating = decimal.Parse(Boardgame.Element("item").Element("statistics").Element("ratings").Element("bayesaverage").Attribute("value").Value),
                                                               //Comments = LoadComments(Boardgame.Element("item").Element("comments")),
                                                               Description = Boardgame.Element("item").Element("description").Value,
@@ -287,6 +289,39 @@ namespace BoardGameGeekJsonApi
                 {
                     _gameCache.Set(Cache.LongThingKey(details.GameId), details, DateTimeOffset.Now.AddSeconds(GameCacheDuration));
                 }
+
+                return details;
+            }
+            catch (Exception ex)
+            {
+                throw;
+                //return null;
+            }
+        }
+
+        public async Task<IEnumerable<GameDetails>> LoadAvgWeights(IEnumerable<int> gameIds)
+        {
+
+            List<GameDetails> details = new List<GameDetails>();
+
+            try
+            {
+                StringBuilder idStr = new StringBuilder();
+                gameIds.ForEach(x => idStr.Append(x.ToString() + ","));
+                idStr.Remove(idStr.Length - 1, 1); // last comma
+
+                Uri teamDataURI = new Uri(string.Format(BASE_URL2 + "/thing?id={0}&stats=1", idStr.ToString()));
+                XDocument xDoc = await ReadData(teamDataURI);
+
+                // LINQ to XML.
+                IEnumerable<GameDetails> gameCollection = from Boardgame in xDoc.Descendants("item")
+                                                          select new GameDetails
+                                                          {
+                                                              GameId = int.Parse(Boardgame.Attribute("id").Value),
+                                                              AverageWeight = decimal.Parse(Boardgame.Element("statistics").Element("ratings").Element("averageweight").Attribute("value").Value),
+                                                          };
+
+                details = gameCollection.ToList();
 
                 return details;
             }

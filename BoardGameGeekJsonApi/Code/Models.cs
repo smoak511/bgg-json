@@ -65,6 +65,7 @@ namespace BoardGameGeekJsonApi
 
         public decimal BGGRating { get; set; }
         public decimal AverageRating { get; set; }
+        public decimal AverageWeight { get; set; }
         public int Rank { get; set; }
 
         public List<string> Designers { get; set; }
@@ -107,6 +108,7 @@ namespace BoardGameGeekJsonApi
 
         public decimal BGGRating { get; set; }
         public decimal AverageRating { get; set; }
+        public decimal AverageWeight { get; set; }
         public int Rank { get; set; }
 
         public List<string> Designers { get; set; }
@@ -161,7 +163,8 @@ namespace BoardGameGeekJsonApi
                 WantToBuy = this.WantToBuy,
                 WishList = this.WishList,
                 UserComment = this.UserComment,
-                Expansions = this.Expansions
+                Expansions = this.Expansions,
+                AverageWeight = this.AverageWeight
             };
         }
 
