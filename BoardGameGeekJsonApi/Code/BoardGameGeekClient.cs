@@ -306,22 +306,32 @@ namespace BoardGameGeekJsonApi
 
             try
             {
-                StringBuilder idStr = new StringBuilder();
-                gameIds.ForEach(x => idStr.Append(x.ToString() + ","));
-                idStr.Remove(idStr.Length - 1, 1); // last comma
+                // BGG limits the size of the number of games requested.  Break the requests up into blocks of game IDs.
+                List<int> gameIdList = gameIds.ToList();
+                const int maxGamesPerBlock = 1000;
+                int numBlocks = (gameIdList.Count + maxGamesPerBlock - 1) / maxGamesPerBlock;
 
-                Uri teamDataURI = new Uri(string.Format(BASE_URL2 + "/thing?id={0}&stats=1", idStr.ToString()));
-                XDocument xDoc = await ReadData(teamDataURI);
+                for (int i = 0; i < numBlocks; i++)
+                {
+                    int gamesInBlock = Math.Min(maxGamesPerBlock, gameIdList.Count - i * maxGamesPerBlock);
+                    List<int> gameIdsInBlock = gameIdList.GetRange(i * maxGamesPerBlock, gamesInBlock);
+                    StringBuilder idStr = new StringBuilder();
+                    gameIdsInBlock.ForEach(x => idStr.Append(x.ToString() + ","));
+                    idStr.Remove(idStr.Length - 1, 1); // last comma
 
-                // LINQ to XML.
-                IEnumerable<GameDetails> gameCollection = from Boardgame in xDoc.Descendants("item")
-                                                          select new GameDetails
-                                                          {
-                                                              GameId = int.Parse(Boardgame.Attribute("id").Value),
-                                                              AverageWeight = decimal.Parse(Boardgame.Element("statistics").Element("ratings").Element("averageweight").Attribute("value").Value),
-                                                          };
+                    Uri teamDataURI = new Uri(string.Format(BASE_URL2 + "/thing?id={0}&stats=1", idStr.ToString()));
+                    XDocument xDoc = await ReadData(teamDataURI);
 
-                details = gameCollection.ToList();
+                    // LINQ to XML.
+                    IEnumerable<GameDetails> gameCollection = from Boardgame in xDoc.Descendants("item")
+                                                              select new GameDetails
+                                                              {
+                                                                  GameId = int.Parse(Boardgame.Attribute("id").Value),
+                                                                  AverageWeight = decimal.Parse(Boardgame.Element("statistics").Element("ratings").Element("averageweight").Attribute("value").Value),
+                                                              };
+
+                    details.AddRange(gameCollection.ToList());
+                }
 
                 return details;
             }
